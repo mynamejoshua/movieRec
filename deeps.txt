@@ -1,0 +1,9 @@
+pip3 install requests
+pip3 install imdbpy    
+pip install python-Levenshtein
+
+#unknown 
+tkinter
+pandas
+pillow
+Levenshtine
