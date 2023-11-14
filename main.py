@@ -18,30 +18,26 @@ from functools import partial
 import Levenshtein
 
 # Create an instance of the IMDb class
+#################### INIT RESOURCES ####################################
 ia = imdb.Cinemagoer()
 df = pd.read_csv('movies.csv')
-# print(df.head())
 
 df['year'] = df['title'].str.extract(r'\((\d{4})\)')
 df['title'] = df['title'].str.extract(r'^(.*?) \(\d{4}\)')
 df['title'] = df['title'].apply(lambda x: str(x))
-df.dropna() # TODO: why doesn't this drop na!!!
+df.dropna() 
 
-# print(df.head())
-# df['year']
-# Holes (2003)
-
-print(df.columns)
+#################### INIT GLOBAL VARS ####################################
 displayed_movies = df.sample(n=10)
 
-#initalize choices
+# initalize choices
 user_choices_df = pd.DataFrame(columns=['title', 'year', 'genres', 'imdbId'])
 
 # Initialize the main window
 root = tk.Tk()
 root.title("Movies Display")
-# root.geometry("1000x600")
 
+# construct the overall form layout
 movie_display_grid = ttk.Frame(root)
 movie_display_grid.grid(row=0, column=0, columnspan=5)
 user_controls_grid = ttk.Frame(root)
@@ -50,8 +46,7 @@ user_choices_grid = ttk.Frame(root)
 user_choices_grid.grid(row=2, column=0, columnspan=5)
 search_window = None
 
-# print(len(df))
-
+#################### CINEAMAGOER QUERIES ####################################
 def get_picture_and_rating_from_id(movie_id):
     movie = ia.get_movie(movie_id)
     cover_url = movie.get('cover url')
@@ -68,6 +63,7 @@ def get_rating_from_id(movie_id):
     movie = ia.get_movie(movie_id)
     return  movie.get('rating')
 
+#################### KNEAREST SEARCH FUNCTIONS ####################################
 def get_10_similar_to_list(list: pd.DataFrame):
     global df
     def weighted_jaccard_similarity(weighted_dictionary: dict, comparator_genres: str):
@@ -128,6 +124,7 @@ def get_10_similar_titles_from_df(comparison_value):
     # Get the top 10 similar titles
     return sorted_df.head(10)
 
+#################### BUTTON FUNCTIONS AND FORM BEHAVIOR ####################################
 def clear_user_choices():
     global user_choices_df
     user_choices_df = pd.DataFrame(columns=['title', 'year', 'genres', 'imdbId'])
@@ -170,8 +167,9 @@ def display_movies(movies):
 
         # Fetch and create the movie image
         photo = ""
-        # photo, rating = get_picture_and_rating_from_id(id) 
-        # description_text += f"\nRating: {rating}"
+        
+        # photo, rating = get_picture_and_rating_from_id(id) ### COMMENT IN FOR IMAGE
+        # description_text += f"\nRating: {rating}"          ### COMMENT IN FOR IMAGE
 
         # Create the image label
         image_button = ttk.Button(movie_display_grid, image=photo, command=partial(add_choice, movie_details))
@@ -191,30 +189,24 @@ def search():
 
         search_results = get_10_similar_titles_from_df(search_term)
 
-        # display_movies(search_results)
-        # search_window.destroy()
-        # return
         search_result_frame = ttk.Frame(search_window)
         search_result_frame.grid(row=2, column=0)
 
 
-        #display options
+        #display search options
         for i in range(len(search_results)):
             movie_details = search_results.iloc[i]
 
             id, title, year, genres = get_movie_row_info(movie_details)
             rating = 'DEBUG'            
-            # rating = get_rating_from_id(id)
+            # rating = get_rating_from_id(id) ### COMMENT IN FOR IMAGE
             description_text = f"Title: {title}\nYear: {year}\nGenres: {genres}\nRating: {rating}"
-
 
             description_label = ttk.Label(search_result_frame, text=description_text)
             pick_button = ttk.Button(search_result_frame, text="pick", command=partial(add_choice, movie_details))
 
-            # description_label.grid(row= 0, column=1,padx=10, pady=10)
-            # pick_button.grid(row=0, column=0, padx=10, pady=10)
-            description_label.grid(     row=i // 5 * 2,              column=i % 5, padx=10, pady=10)
-            pick_button.grid(row=i // 5 * 2 + 1,          column=i % 5)
+            description_label.grid( row=i // 5 * 2,              column=i % 5, padx=10, pady=10)
+            pick_button.grid(       row=i // 5 * 2 + 1,          column=i % 5)
 
 
     # Check if the search_window exists
@@ -222,10 +214,12 @@ def search():
         search_window = tk.Toplevel(root)
         search_window.title("Search")
 
+    # create search popup and fill...
     search_entry_frame = ttk.Frame(search_window)
 
     search_prompt = ttk.Label(search_window, text="Enter the title of the movie to search for: ")
     search_entry = ttk.Entry(search_entry_frame, width=50)
+
     search_button = ttk.Button(search_entry_frame, text="Search", command=perform_search)
 
     search_prompt.grid(row=0, column=0)
@@ -246,7 +240,7 @@ def debug():
 def display_recomended():
     display_movies(get_10_similar_to_list(user_choices_df))
 
-
+#################### FILL FORM WITH BUTTONS ####################################
 refresh_button = ttk.Button(user_controls_grid, text='Refresh Choices', command=display_new)
 refresh_button.grid(row=0, column=0)
 clear_user_choices_button = ttk.Button(user_controls_grid, text='Clear', command=clear_user_choices)
@@ -259,6 +253,8 @@ recomendation_display_button = ttk.Button(user_controls_grid, text='Display Reco
 recomendation_display_button.grid(row=0, column=9)
 
 
+#################### DISPLAY START ####################################
 display_movies(displayed_movies)
-# Start the Tkinter event loop 
+
+#################### TKINTER MAIN LOOP ####################################
 root.mainloop()
